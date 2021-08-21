@@ -15,6 +15,7 @@ EP_DATE = 'ep_date'
 CSA = 'csa'
 DPH_CASE_COLS = 'cases_{}day', 'case_{}day_rate', 'adj_case_{}day_rate'
 
+LOS_ANGELES = 'Los Angeles'
 YAXIS_RANGE = 400, 1000, 1600
 
 # First Known COVID-19 Case in California
@@ -32,7 +33,10 @@ lacdph_csa_list.sort()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__,
+                title='CA Local COVID-19 Dashboard',
+                external_stylesheets=external_stylesheets)
+server = app.server
 
 counties = list(df_times[COUNTY].unique())
 counties.sort()
@@ -70,7 +74,8 @@ GitHub: [amhirsch/ca-local-covid19-dashboard](https://github.com/amhirsch/ca-loc
 
 LABEL = 'label'
 VALUE = 'value'
-app.layout = html.Div([
+
+CONTROLS = html.Div([
     html.Label('County', htmlFor='selected-county'),
     html.Div([
         dcc.Dropdown(id='selected-county',
@@ -121,15 +126,32 @@ app.layout = html.Div([
             'flexDirection': 'row',
             'columnGap': '1.5em',
             'paddingLeft': '1.5em'
-        }),
-    dcc.Graph(id='csa-ts', style={'maxWidth': '50em'}),
-    dcc.Markdown(FOOTNOTES)
-])
+        })
+],
+                    style={
+                        'width': '35em',
+                        'paddingLeft': '3em'
+                    })
+
+app.layout = html.Div([
+    html.Div([
+        html.H1('California Local COVID-19 Dashboard'), CONTROLS,
+        dcc.Graph(id='csa-ts', style={'maxWidth': '50em'}),
+        dcc.Markdown(FOOTNOTES)
+    ],
+             style={'width': '50em'})
+],
+                      style={
+                          'display': 'flex',
+                          'justify-content': 'center',
+                          'paddingTop': '0.5em',
+                      })
 
 
 @app.callback(Output('selected-place-label', 'children'),
               Output('selected-place-value', 'options'),
               Output('selected-place-value', 'value'),
+              Output('selected-data-source', 'value'),
               Input('selected-county', 'value'),
               Input('selected-place-value', 'value'),
               Input('selected-data-source', 'value'))
@@ -139,8 +161,8 @@ def county_places(county, place_or_id, data_source):
         places.sort()
         if place_or_id in places:
             selected = place_or_id
-        elif place_or_id in lacdph_csa_list:
-            selected = id_to_place('Los Angeles', place_or_id)
+        elif county == LOS_ANGELES and place_or_id in lacdph_csa_list:
+            selected = id_to_place(LOS_ANGELES, place_or_id)
         else:
             selected = places[0]
     else:
@@ -148,7 +170,7 @@ def county_places(county, place_or_id, data_source):
         if place_or_id in places:
             selected = place_or_id
         elif place_or_id not in places:
-            selected = place_to_id('Los Angeles', place_or_id)
+            selected = place_to_id(LOS_ANGELES, place_or_id)
             if selected not in places:
                 selected = places[0]
         else:
@@ -158,14 +180,15 @@ def county_places(county, place_or_id, data_source):
             if data_source == 'latimes' else 'Countywide Statistical Area', [{
                 LABEL: x,
                 VALUE: x
-            } for x in places], selected)
+            } for x in places], selected,
+            data_source if county == LOS_ANGELES else 'latimes')
 
 
 @app.callback(Output('selected-data-source', 'options'),
               Input('selected-county', 'value'))
 def data_source_options(county):
     options = [{LABEL: 'Los Angeles Times', VALUE: 'latimes'}]
-    if county == 'Los Angeles':
+    if county == LOS_ANGELES:
         options.append({LABEL: 'LACDPH', VALUE: 'lacdph'})
     return options
 
@@ -257,4 +280,4 @@ def update_lacdph_graph(csa, date_range, obs_period):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
