@@ -7,8 +7,9 @@ Data is provided by the Los Angeles Times and Los Angeles County Department of P
 ### Python Environment
 Clone the repository and install the pipenv environment with `$python3 -m pipenv install`.
 ### Acquire Data Sources
-1. Navigate to the LACDPH [COVID-19 Data Dashboard](http://dashboard.publichealth.lacounty.gov/covid19_surveillance_dashboard/) and download the "14-Day Community Cases" and "7-Day Community Cases" tables into this directory.
-2. Use the `fetch-latimes-place-totals.sh` Bash script to get the latest COVID-19 case totals compiled by the Los Angeles Times.
+1. Navigate to the LACDPH [COVID-19 Data Dashboard](http://dashboard.publichealth.lacounty.gov/covid19_surveillance_dashboard/) and download the "14-Day Community Cases" and "7-Day Community Cases" tables into the `/sources` directory.
+2. Run `./fetch-latimes-place-totals.sh` Bash script to get the latest COVID-19 case totals compiled by the Los Angeles Times.
+3. Convert the CSV files to Pandas DataFrame pickle files by running `./parse-sources.sh`
 
 ## Deploy
 Run the dashboard app with `$python3 -m pipenv run python app.py`.

@@ -20,31 +20,12 @@ YAXIS_RANGE = 400, 1000, 1600
 # First Known COVID-19 Case in California
 ABSOLUTE_FIRST_DAY = pd.to_datetime('2020-01-26')
 
-df_times = pd.read_pickle('latimes-places-ts.pickle')
+df_times = pd.read_pickle('data/latimes-places-ts.pickle')
 ABSOLUTE_LAST_DAY = df_times[DATE].max()
 
 df_dph_7day, df_dph_14day = [
-    pd.read_csv(f'LA_County_Covid19_CSA_{x}day_case_death_table.csv',
-                parse_dates=[EP_DATE],
-                infer_datetime_format=True) for x in (7, 14)
+    pd.read_pickle(f'data/lacdph-{x}day.pickle') for x in (7, 14)
 ]
-
-dph_last_day = df_dph_7day[EP_DATE].max() - pd.Timedelta(7, 'days')
-df_dph_7day = df_dph_7day[(df_dph_7day[EP_DATE].notna()) &
-                          (df_dph_7day[EP_DATE] <= dph_last_day)].copy()
-df_dph_14day = df_dph_14day[(df_dph_14day[EP_DATE].notna()) &
-                            (df_dph_14day[EP_DATE] <= dph_last_day)].copy()
-
-for df in df_dph_7day, df_dph_14day:
-    df.drop(columns=['Unnamed: 0'], inplace=True)
-    df.rename(columns={'geo_merge': CSA}, inplace=True)
-    df.sort_values([EP_DATE, CSA], inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    df[CSA] = df[CSA].convert_dtypes()
-    df['population'] = df['population'].astype('int')
-    for stat in 'case', 'death':
-        df[f'{stat}_rate_unstable'] = df[f'{stat}_rate_unstable'].apply(
-            lambda x: x == '^')
 
 lacdph_csa_list = list(df_dph_7day['csa'].unique())
 lacdph_csa_list.sort()

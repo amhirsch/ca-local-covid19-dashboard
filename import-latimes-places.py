@@ -11,7 +11,7 @@ NEW_CASES = 'new_cases'
 NEW_CASES_7DAY, NEW_CASES_14DAY = [f'new_cases_{x}day' for x in (7, 14)]
 CASE_RATE_7DAY, CASE_RATE_14DAY = [f'case_rate_{x}day' for x in (7, 14)]
 
-df = pd.read_csv('latimes-place-totals.csv',
+df = pd.read_csv('sources/latimes-place-totals.csv',
                  parse_dates=[DATE],
                  infer_datetime_format=True)
 
@@ -35,4 +35,5 @@ for id_ in df[ID].unique():
         (df.loc[id_mask, NEW_CASES_14DAY] / df.loc[id_mask, POPULATION]) *
         100_000).round(1)
 
-df.to_pickle('latimes-places-ts.pickle')
+if __name__ == '__main__':
+    df.to_pickle('data/latimes-places-ts.pickle')

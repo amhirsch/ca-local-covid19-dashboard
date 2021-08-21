@@ -1,2 +1,2 @@
-*.csv
-*.pickle
+data/*.pickle
+sources/*.csv
