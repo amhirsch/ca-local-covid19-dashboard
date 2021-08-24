@@ -1,3 +1,4 @@
+from typing import Tuple
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -5,6 +6,9 @@ from dash.dependencies import Input, Output
 from pandas._libs.missing import NA
 import plotly.express as px
 import pandas as pd
+
+LACDPH = 'lacdph'
+LATIMES = 'latimes'
 
 DATE = 'date'
 COUNTY = 'county'
@@ -28,8 +32,8 @@ df_dph_7day, df_dph_14day = [
     pd.read_pickle(f'data/lacdph-{x}day.pickle') for x in (7, 14)
 ]
 
-lacdph_csa_list = list(df_dph_7day['csa'].unique())
-lacdph_csa_list.sort()
+LACDPH_CSA_LIST = list(df_dph_7day['csa'].unique())
+LACDPH_CSA_LIST.sort()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -40,6 +44,12 @@ server = app.server
 
 counties = list(df_times[COUNTY].unique())
 counties.sort()
+
+
+def latimes_county_places(county: str) -> Tuple[str, ...]:
+    places = list(df_times.loc[df_times[COUNTY] == county, NAME].unique())
+    places.sort()
+    return tuple(places)
 
 
 def place_to_id(county, name):
@@ -118,7 +128,7 @@ CONTROLS = html.Div([
             ]),
             html.Div([
                 html.Label('Data Source', htmlFor='selected-data-source'),
-                dcc.RadioItems(id='selected-data-source', value='latimes')
+                dcc.RadioItems(id='selected-data-source', value=LATIMES)
             ])
         ],
         style={
@@ -156,32 +166,27 @@ app.layout = html.Div([
               Input('selected-place-value', 'value'),
               Input('selected-data-source', 'value'))
 def county_places(county, place_or_id, data_source):
-    if data_source == 'latimes':
-        places = list(df_times.loc[df_times[COUNTY] == county, NAME].unique())
-        places.sort()
+    places = (LACDPH_CSA_LIST
+              if data_source == LACDPH else latimes_county_places(county))
+    if county == LOS_ANGELES:
         if place_or_id in places:
             selected = place_or_id
-        elif county == LOS_ANGELES and place_or_id in lacdph_csa_list:
+        elif data_source == LACDPH and place_or_id in latimes_county_places(
+                LOS_ANGELES):
+            selected = place_to_id(LOS_ANGELES, place_or_id)
+        elif data_source == LATIMES and place_or_id in LACDPH_CSA_LIST:
             selected = id_to_place(LOS_ANGELES, place_or_id)
         else:
             selected = places[0]
     else:
-        places = lacdph_csa_list
-        if place_or_id in places:
-            selected = place_or_id
-        elif place_or_id not in places:
-            selected = place_to_id(LOS_ANGELES, place_or_id)
-            if selected not in places:
-                selected = places[0]
-        else:
-            selected = places[0]
+        selected = place_or_id if place_or_id in places else places[0]
 
     return ('Place'
-            if data_source == 'latimes' else 'Countywide Statistical Area', [{
+            if data_source == LATIMES else 'Countywide Statistical Area', [{
                 LABEL: x,
                 VALUE: x
             } for x in places], selected,
-            data_source if county == LOS_ANGELES else 'latimes')
+            data_source if county == LOS_ANGELES else LATIMES)
 
 
 @app.callback(Output('selected-data-source', 'options'),
@@ -189,7 +194,7 @@ def county_places(county, place_or_id, data_source):
 def data_source_options(county):
     options = [{LABEL: 'Los Angeles Times', VALUE: 'latimes'}]
     if county == LOS_ANGELES:
-        options.append({LABEL: 'LACDPH', VALUE: 'lacdph'})
+        options.append({LABEL: 'LACDPH', VALUE: LACDPH})
     return options
 
 
@@ -199,7 +204,7 @@ def data_source_options(county):
               Input('observational-period', 'value'),
               Input('selected-data-source', 'value'))
 def update_general_graph(county, place, date_range, obs_period, data_source):
-    if data_source == 'lacdph':
+    if data_source == LACDPH:
         return update_lacdph_graph(place, date_range, obs_period)
     return update_latimes_graph(county, place, date_range, obs_period)
 
@@ -209,7 +214,9 @@ def update_latimes_graph(county, place, date_range, obs_period):
     NEW_CASES_7DAY, NEW_CASES_14DAY = [f'new_cases_{x}day' for x in (7, 14)]
     CASE_RATE_7DAY, CASE_RATE_14DAY = [f'case_rate_{x}day' for x in (7, 14)]
 
-    id_ = place_to_id(county, place)
+    county_places = latimes_county_places(county)
+    id_ = place_to_id(county,
+                      place) if place in county_places else county_places[0]
 
     df_place = df_times[df_times[ID] == id_]
     dep_var, dep_var_raw = (CASE_RATE_7DAY,
