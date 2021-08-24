@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Iterable, List, Tuple
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -20,7 +20,10 @@ CSA = 'csa'
 DPH_CASE_COLS = 'cases_{}day', 'case_{}day_rate', 'adj_case_{}day_rate'
 
 LOS_ANGELES = 'Los Angeles'
-YAXIS_RANGE = 400, 1000, 1600
+YAXIS_RANGE = 300, 600, 1000, 1600
+
+LABEL = 'label'
+VALUE = 'value'
 
 # First Known COVID-19 Case in California
 ABSOLUTE_FIRST_DAY = pd.to_datetime('2020-01-26')
@@ -52,6 +55,10 @@ def latimes_county_places(county: str) -> Tuple[str, ...]:
     return tuple(places)
 
 
+def create_dash_options(iterable: Iterable) -> List[Dict[str, str]]:
+    return [{LABEL: x, VALUE: x} for x in iterable]
+
+
 def place_to_id(county, name):
     id_ = df_times.loc[(df_times[COUNTY] == county) & (df_times[NAME] == name),
                        ID].unique()
@@ -81,9 +88,6 @@ Sources:
 
 GitHub: [amhirsch/ca-local-covid19-dashboard](https://github.com/amhirsch/ca-local-covid19-dashboard)
 '''
-
-LABEL = 'label'
-VALUE = 'value'
 
 CONTROLS = html.Div([
     html.Label('County', htmlFor='selected-county'),
@@ -158,44 +162,41 @@ app.layout = html.Div([
                       })
 
 
-@app.callback(Output('selected-place-label', 'children'),
-              Output('selected-place-value', 'options'),
-              Output('selected-place-value', 'value'),
-              Output('selected-data-source', 'value'),
-              Input('selected-county', 'value'),
-              Input('selected-place-value', 'value'),
-              Input('selected-data-source', 'value'))
-def county_places(county, place_or_id, data_source):
-    places = (LACDPH_CSA_LIST
-              if data_source == LACDPH else latimes_county_places(county))
-    if county == LOS_ANGELES:
-        if place_or_id in places:
-            selected = place_or_id
-        elif data_source == LACDPH and place_or_id in latimes_county_places(
-                LOS_ANGELES):
-            selected = place_to_id(LOS_ANGELES, place_or_id)
-        elif data_source == LATIMES and place_or_id in LACDPH_CSA_LIST:
-            selected = id_to_place(LOS_ANGELES, place_or_id)
-        else:
-            selected = places[0]
-    else:
-        selected = place_or_id if place_or_id in places else places[0]
-
-    return ('Place'
-            if data_source == LATIMES else 'Countywide Statistical Area', [{
-                LABEL: x,
-                VALUE: x
-            } for x in places], selected,
-            data_source if county == LOS_ANGELES else LATIMES)
-
-
 @app.callback(Output('selected-data-source', 'options'),
+              Output('selected-data-source', 'value'),
               Input('selected-county', 'value'))
-def data_source_options(county):
-    options = [{LABEL: 'Los Angeles Times', VALUE: 'latimes'}]
+def county_data_options(county):
+    data_src_options = [{LABEL: 'Los Angeles Times', VALUE: LATIMES}]
     if county == LOS_ANGELES:
-        options.append({LABEL: 'LACDPH', VALUE: LACDPH})
-    return options
+        data_src_options.append({LABEL: 'LACDPH', VALUE: LACDPH})
+    return data_src_options, LATIMES
+
+
+@app.callback(Output('selected-place-label', 'children'),
+              Input('selected-data-source', 'value'))
+def place_label(data_src):
+    return 'Place' if data_src == LATIMES else 'Countywide Statistical Area'
+
+
+@app.callback(Output('selected-place-value', 'options'),
+              Output('selected-place-value', 'value'),
+              Input('selected-county', 'value'),
+              Input('selected-data-source', 'value'),
+              Input('selected-place-value', 'value'))
+def place_value(county, data_src, orig_place):
+    if data_src == LACDPH:
+        place_options = LACDPH_CSA_LIST
+        if orig_place in latimes_county_places(LOS_ANGELES):
+            orig_place = place_to_id(LOS_ANGELES, orig_place)
+    else:
+        place_options = latimes_county_places(county)
+        if county == LOS_ANGELES and orig_place in LACDPH_CSA_LIST:
+            orig_place = id_to_place(LOS_ANGELES, orig_place)
+    if orig_place in place_options:
+        place_selection = orig_place
+    else:
+        place_selection = place_options[0]
+    return create_dash_options(place_options), place_selection
 
 
 @app.callback(Output('csa-ts', 'figure'), Input('selected-county', 'value'),
