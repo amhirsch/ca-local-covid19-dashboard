@@ -101,65 +101,74 @@ CONTROLS = html.Div([
         html.Label(
             'Place', id='selected-place-label', htmlFor='selected-place-value'),
         dcc.Dropdown(id='selected-place-value', value='Burbank')
+    ]),
+    html.Div([
+        html.Div([
+            html.Label('Date Range', htmlFor='time-selector'),
+            dcc.RadioItems(id='time-selector',
+                           options=[{
+                               LABEL: 'All time',
+                               VALUE: 0
+                           }, {
+                               LABEL: '4 months',
+                               VALUE: 120
+                           }],
+                           value=120)
+        ]),
+        html.Div([
+            html.Label('Observational Period', htmlFor='observational-period'),
+            dcc.RadioItems(id='observational-period',
+                           options=[{
+                               LABEL: '7 day',
+                               VALUE: 7
+                           }, {
+                               LABEL: '14 day',
+                               VALUE: 14
+                           }],
+                           value=7)
+        ]),
+        html.Div([
+            html.Label('Data Source', htmlFor='selected-data-source'),
+            dcc.RadioItems(id='selected-data-source', value=LATIMES)
+        ])
     ],
-             style={'maxWidth': '35em'}),
-    html.Div(
-        [
-            html.Div([
-                html.Label('Date Range', htmlFor='time-selector'),
-                dcc.RadioItems(id='time-selector',
-                               options=[{
-                                   LABEL: 'All time',
-                                   VALUE: 0
-                               }, {
-                                   LABEL: '4 months',
-                                   VALUE: 120
-                               }],
-                               value=120)
-            ]),
-            html.Div([
-                html.Label('Observational Period',
-                           htmlFor='observational-period'),
-                dcc.RadioItems(id='observational-period',
-                               options=[{
-                                   LABEL: '7 day',
-                                   VALUE: 7
-                               }, {
-                                   LABEL: '14 day',
-                                   VALUE: 14
-                               }],
-                               value=7)
-            ]),
-            html.Div([
-                html.Label('Data Source', htmlFor='selected-data-source'),
-                dcc.RadioItems(id='selected-data-source', value=LATIMES)
-            ])
-        ],
-        style={
-            'display': 'flex',
-            'flexDirection': 'row',
-            'columnGap': '1.5em',
-            'paddingLeft': '1.5em'
-        })
+             style={
+                 'display': 'flex',
+                 'columnGap': '2em'
+             })
 ],
                     style={
-                        'width': '35em',
-                        'paddingLeft': '3em'
+                        'width': '32em',
+                        'paddingLeft': '1em'
                     })
 
-app.layout = html.Div([
-    html.Div([
-        html.H1('California Local COVID-19 Dashboard'), CONTROLS,
-        dcc.Graph(id='csa-ts', style={'maxWidth': '50em'}),
-        dcc.Markdown(FOOTNOTES)
+app.layout = html.Div(
+    [
+        html.Div([
+            html.H1('California Local COVID-19 Dashboard'),
+            html.Div([
+                CONTROLS,
+                dcc.Graph(id='csa-ts',
+                          style={
+                              'width': '50em',
+                              'height': '35em',
+                              'paddingLeft': '1em'
+                          })
+            ],
+                     style={
+                         'display': 'flex',
+                         'flexWrap': 'wrap',
+                         'justifyContent': 'left'
+                     }),
+            dcc.Markdown(FOOTNOTES)
+        ])
     ],
-             style={'width': '50em'})
-],
-                      style={
-                          'display': 'flex',
-                          'justify-content': 'center',
-                          'paddingTop': '0.5em',
-                      })
+    style={
+        'paddingLeft': '1em',
+        'display': 'flex',
+        'justifyContent': 'center',
+        'alignItems': 'center'
+    })
 
 
 @app.callback(Output('selected-data-source', 'options'),
