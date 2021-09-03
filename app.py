@@ -80,14 +80,8 @@ def id_to_place(county, id_):
         f'The ID {id_} in {county} County could not be converted to place.')
 
 
-FOOTNOTES = '''
-Sources:
-
-* Los Angeles Times - [California Coronavirus Data](https://github.com/datadesk/california-coronavirus-data)
-* Los Angeles County Department of Public Health - [COVID-19 Data Dashboard](http://dashboard.publichealth.lacounty.gov/covid19_surveillance_dashboard/)
-
-GitHub: [amhirsch/ca-local-covid19-dashboard](https://github.com/amhirsch/ca-local-covid19-dashboard)
-'''
+with open('footnotes.md') as f:
+    FOOTNOTES = f.read()
 
 CONTROLS = html.Div([
     html.Label('County', htmlFor='selected-county'),
@@ -100,7 +94,7 @@ CONTROLS = html.Div([
                      value='Los Angeles'),
         html.Label(
             'Place', id='selected-place-label', htmlFor='selected-place-value'),
-        dcc.Dropdown(id='selected-place-value', value='Burbank')
+        dcc.Dropdown(id='selected-place-value', value='Claremont')
     ]),
     html.Div([
         html.Div([
@@ -116,7 +110,7 @@ CONTROLS = html.Div([
                            value=120)
         ]),
         html.Div([
-            html.Label('Observational Period', htmlFor='observational-period'),
+            html.Label('Sample Period', htmlFor='observational-period'),
             dcc.RadioItems(id='observational-period',
                            options=[{
                                LABEL: '7 day',
@@ -160,7 +154,7 @@ app.layout = html.Div(
                          'flexWrap': 'wrap',
                          'justifyContent': 'left'
                      }),
-            dcc.Markdown(FOOTNOTES)
+            dcc.Markdown(FOOTNOTES, style={'maxWidth': '60em'})
         ])
     ],
     style={

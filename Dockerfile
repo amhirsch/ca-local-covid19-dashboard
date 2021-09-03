@@ -6,7 +6,7 @@ RUN pip install pipenv
 COPY Pipfile Pipfile.lock ./
 RUN pipenv install --system --deploy
 
-COPY app.py .
+COPY app.py footnotes.md ./
 COPY data/*.pickle data/
 
 RUN useradd -m myuser
