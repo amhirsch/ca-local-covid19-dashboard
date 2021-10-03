@@ -11,9 +11,11 @@ df_dph_7day, df_dph_14day = [
 ]
 
 dph_last_day = df_dph_7day[EP_DATE].max() - pd.Timedelta(7, 'days')
-df_dph_7day = df_dph_7day[(df_dph_7day[EP_DATE].notna()) &
+df_dph_7day = df_dph_7day[(df_dph_7day['geo_merge'].notna()) &
+                          (df_dph_7day[EP_DATE].notna()) &
                           (df_dph_7day[EP_DATE] <= dph_last_day)].copy()
-df_dph_14day = df_dph_14day[(df_dph_14day[EP_DATE].notna()) &
+df_dph_14day = df_dph_14day[(df_dph_14day['geo_merge'].notna()) &
+                            (df_dph_14day[EP_DATE].notna()) &
                             (df_dph_14day[EP_DATE] <= dph_last_day)].copy()
 
 for df in df_dph_7day, df_dph_14day:
