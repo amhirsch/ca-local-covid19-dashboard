@@ -8,8 +8,5 @@ dash = "*"
 pandas = "*"
 gunicorn = "*"
 
-[dev-packages]
-jupyterlab = "*"
-
 [requires]
-python_version = "3.9"
+python_version = "3.10"
